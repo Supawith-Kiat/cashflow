@@ -4,43 +4,22 @@ import random
 from datetime import datetime
 
 # --- 1. CONFIG & STYLES ---
-st.set_page_config(page_title="Cashflow Pro V39", layout="wide")
+st.set_page_config(page_title="Cashflow Pro V40 (Online)", layout="wide")
 
 st.markdown("""
 <style>
     /* ---------------------- CSS FIXES ---------------------- */
+    .dash-box, .stat-card { color: #333333 !important; }
+    .dash-label { font-size: 14px; color: #555555 !important; font-weight: bold; margin-bottom: 5px; }
+    .dash-value { font-size: 24px; font-weight: 800; color: #000000 !important; }
+    h3, h4 { color: #000000 !important; margin: 0; padding: 5px 0; }
     
-    /* บังคับสีตัวอักษรในกล่องให้เป็นสีเข้ม (แก้ปัญหามองไม่เห็นใน Dark Mode) */
-    .dash-box, .stat-card {
-        color: #333333 !important; /* สีเทาเข้มเกือบดำ */
-    }
-    
-    .dash-label {
-        font-size: 14px;
-        color: #555555 !important;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-    
-    .dash-value {
-        font-size: 24px;
-        font-weight: 800;
-        color: #000000 !important; /* สีดำสนิท */
-    }
-    
-    h3, h4 {
-        color: #000000 !important; /* หัวข้อในการ์ดก็ต้องดำ */
-        margin: 0;
-        padding: 5px 0;
-    }
-
     /* ------------------------------------------------------- */
-
     .player-header { background-color: #fff3cd; border-left: 10px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
     .ph-name { font-size: 28px; font-weight: bold; color: #333; margin: 0; }
     .ph-job { font-size: 18px; color: #666; font-style: italic; }
 
-    .dashboard-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .dashboard-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
     .dash-box { flex: 1; background-color: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; border-top: 5px solid #ccc; min-width: 160px; }
     
     .box-passive { border-color: #0d6efd; }
@@ -55,16 +34,13 @@ st.markdown("""
 
     .input-area { background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px; color: #333; }
     
-    /* Headers & Tables */
     .header-blue { background-color: #4472c4; color: white !important; padding: 8px; text-align: center; font-weight: bold; border-radius: 5px 5px 0 0; }
     .header-orange { background-color: #ed7d31; color: white !important; padding: 8px; text-align: center; font-weight: bold; border-radius: 5px 5px 0 0; }
     .header-green { background-color: #70ad47; color: white !important; padding: 8px; text-align: center; font-weight: bold; border-radius: 5px 5px 0 0; }
     
     .stat-card { background-color: #ffffff; padding: 15px; border: 2px solid #ddd; border-radius: 10px; text-align: center; margin-bottom: 10px; }
-    
     .stDataFrame { border: 1px solid #ddd; }
     
-    /* Fast Track */
     .ft-header { background: linear-gradient(90deg, #FFD700, #B8860B); color: white; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 20px; }
     .ft-title { font-size: 42px; font-weight: 900; text-transform: uppercase; text-shadow: 2px 2px 4px #000; color: white !important; }
 </style>
@@ -89,7 +65,6 @@ TX_RAT_RACE = [
 
 TX_FAST_TRACK = ["🟢 Cash Flow (รับเงิน)", "🏢 ซื้อกิจการ (ลงทุน)", "🛍️ ซื้อความสุข", "🙏 บริจาคการกุศล (1M)", "⚖️ ถูกฟ้อง (เสีย 50%)", "🔍 ตรวจสอบภาษี (เสีย 50%)", "💔 หย่า (หมดตัว!)"]
 
-# ฐานข้อมูลอาชีพ (ครบ 31 อาชีพ)
 PROFESSIONS = {
     "แพทย์ (Doctor)": {"salary": 132000, "tax": 32000, "savings": 35000, "child_cost": 7000, "expenses": {"ผ่อนบ้าน": 19000, "กู้เรียน": 7000, "ผ่อนรถ": 3000, "บัตรเครดิต": 2000, "อื่นๆ": 20000}, "liabilities": {"หนี้บ้าน": 2020000, "หนี้กู้เรียน": 1500000, "หนี้รถ": 190000, "หนี้บัตรเครดิต": 100000}},
     "นักบิน (Pilot)": {"salary": 95000, "tax": 20000, "savings": 25000, "child_cost": 4000, "expenses": {"ผ่อนบ้าน": 10000, "กู้เรียน": 0, "ผ่อนรถ": 3000, "บัตรเครดิต": 7000, "อื่นๆ": 20000}, "liabilities": {"หนี้บ้าน": 900000, "หนี้กู้เรียน": 0, "หนี้รถ": 150000, "หนี้บัตรเครดิต": 220000}},
@@ -157,7 +132,6 @@ class Player:
     def total_income(self): return self.salary + self.passive_income
     @property
     def monthly_cashflow(self): return self.total_income - self.total_expenses
-    
     def check_escape(self): return self.passive_income > self.total_expenses
 
     def go_fast_track(self):
@@ -168,7 +142,7 @@ class Player:
         self.log(">>> เข้าสู่ FAST TRACK! <<<", self.fast_track_cf, 0)
 
     def log(self, item, inc, exp):
-        self.ledger.append({"เวลา": datetime.now().strftime("%H:%M:%S"),"รายการ": item,"รับ": inc,"จ่าย": exp,"คงเหลือ": self.cash})
+        self.ledger.append({"รายการ": item,"รับ": inc,"จ่าย": exp,"คงเหลือ": self.cash})
 
     # ACTIONS
     def receive_payday(self):
@@ -228,7 +202,7 @@ class Player:
 
     def expense_event(self, name, amount):
         if self.cash >= amount: self.cash -= amount; self.log(name, 0, amount); return True, "💸 จ่ายแล้ว"
-        return False, "❌ เงินไม่พอจ่าย"
+        return False, "❌ เงินไม่พอ"
 
     def donate_rat_race(self):
         amt = int(self.total_income * 0.10)
@@ -261,7 +235,7 @@ class Player:
 
     def ft_payday(self): self.cash += self.fast_track_cf; self.log("รับเงิน FT", self.fast_track_cf, 0)
     def ft_buy(self, n, c, f):
-        if self.cash >= c: self.cash-=c; self.fast_track_cf+=f; self.log(f"ลงทุน FT: {name}", 0, cost); return True, f"✅ สำเร็จ (CF +{flow:,})"
+        if self.cash >= c: self.cash-=c; self.fast_track_cf+=f; self.log(f"ลงทุน FT: {name}", 0, c); return True, f"✅ สำเร็จ (CF +{f:,})"
         return False, "❌ เงินไม่พอ"
     def ft_charity(self):
         if self.cash >= 1000000: self.cash-=1000000; self.log("บริจาค FT",0,1000000); return True, "🙏 สำเร็จ"
@@ -269,44 +243,53 @@ class Player:
     def ft_bad_event(self, t):
         l = self.cash if t=="หย่า" else int(self.cash/2); self.cash-=l; self.log(t,0,l); return f"📉 เสีย {l:,}"
 
-# --- 4. SESSION ---
-if 'game_started' not in st.session_state:
-    st.session_state.game_started = False
-    st.session_state.players = []
+# --- 4. SESSION & SHARED STATE ---
+# ใช้ st.cache_resource เพื่อแชร์ข้อมูลระหว่างเครื่อง
+@st.cache_resource
+def get_game_state():
+    return {'game_started': False, 'players': []}
+
+game_state = get_game_state()
 
 # --- 5. SETUP ---
-if not st.session_state.game_started:
+if not game_state['game_started']:
     st.title("🎲 Cashflow Setup")
     num = st.number_input("จำนวนผู้เล่น", 1, 6, 1)
     with st.form("setup"):
         cols = st.columns(3)
+        temp_data = {}
         for i in range(num):
             with cols[i%3]:
                 st.markdown(f"**P{i+1}**")
                 n = st.text_input(f"ชื่อ", f"P{i+1}", key=f"n{i}")
                 j = st.selectbox(f"อาชีพ", list(PROFESSIONS.keys()), key=f"j{i}")
-                st.session_state[f"temp_p{i}"] = (n, j)
+                temp_data[i] = (n, j)
         if st.form_submit_button("🚀 เริ่มเกม"):
+            game_state['players'] = []
             for i in range(num):
-                n_val = st.session_state.get(f"temp_p{i}", (f"P{i+1}", list(PROFESSIONS.keys())[0]))[0]
-                j_val = st.session_state.get(f"temp_p{i}", (f"P{i+1}", list(PROFESSIONS.keys())[0]))[1]
-                st.session_state.players.append(Player(n_val, j_val))
-            st.session_state.game_started = True
+                n_val, j_val = temp_data[i]
+                game_state['players'].append(Player(n_val, j_val))
+            game_state['game_started'] = True
             st.rerun()
 
 # --- 6. MAIN APP ---
 else:
     with st.sidebar:
         st.header("Menu")
+        if st.button("🔄 อัปเดตข้อมูลล่าสุด"): st.rerun() # ปุ่มสำคัญสำหรับ Multiplayer
         menu = st.radio("เลือกหน้าจอ", ["🎮 เล่นเกม (Action)", "📊 ดูภาพรวม (Dashboard)"])
         st.divider()
         if menu == "🎮 เล่นเกม (Action)":
             st.header("Control")
-            p_idx = st.radio("ผู้เล่น", range(len(st.session_state.players)), format_func=lambda i: st.session_state.players[i].name)
-            p = st.session_state.players[p_idx]
+            # เลือกผู้เล่นจาก game_state
+            p_idx = st.radio("ผู้เล่น", range(len(game_state['players'])), format_func=lambda i: game_state['players'][i].name)
+            p = game_state['players'][p_idx]
+            
             st.divider()
             if st.button("🎲 ทอยเต๋า"): st.success(f"แต้ม: {random.randint(1,6)}")
-            if st.button("❌ รีเซ็ต"): st.session_state.clear(); st.rerun()
+            if st.button("❌ รีเซ็ตเกม (ล้างทั้งหมด)"): 
+                st.cache_resource.clear()
+                st.rerun()
 
     # ================= RAT RACE =================
     if menu == "🎮 เล่นเกม (Action)":
@@ -407,14 +390,14 @@ else:
 
                 st.markdown('</div>', unsafe_allow_html=True)
 
-            # [ADDED BACK] TABLES ON ACTION SCREEN
+            # TABLES ON ACTION SCREEN
             st.markdown("---")
             l, r = st.columns([5, 5])
             with l:
-                st.markdown('<div class="blue-header">บัญชีรายรับ-รายจ่าย</div>', unsafe_allow_html=True)
+                st.markdown('<div class="header-blue">บัญชีรายรับ-รายจ่าย</div>', unsafe_allow_html=True)
                 if p.ledger: st.dataframe(pd.DataFrame(p.ledger).iloc[::-1], hide_index=True, use_container_width=True, height=400)
             with r:
-                st.markdown('<div class="green-header">ทรัพย์สิน (Assets)</div>', unsafe_allow_html=True)
+                st.markdown('<div class="header-green">ทรัพย์สิน (Assets)</div>', unsafe_allow_html=True)
                 st.markdown(f"""<div class="asset-summary-box"><div>💵 เงินสด: {p.cash:,}</div><div style="color:#d4af37;">🥇 ทองคำ: {p.gold:,}</div></div>""", unsafe_allow_html=True)
                 
                 t1, t2 = st.tabs(["อสังหา/ธุรกิจ", "หุ้น/กองทุน"])
@@ -432,7 +415,7 @@ else:
                         st.dataframe(df_stocks, hide_index=True)
                     else: st.caption("-ว่าง-")
                 
-                st.markdown('<div class="blue-header" style="background:#dc3545; margin-top:10px;">หนี้สิน (Liabilities)</div>', unsafe_allow_html=True)
+                st.markdown('<div class="header-blue" style="background:#dc3545 !important;">หนี้สิน (Liabilities)</div>', unsafe_allow_html=True)
                 if p.liabilities: st.dataframe(pd.DataFrame(list(p.liabilities.items()), columns=['รายการ','คงเหลือ']), hide_index=True)
 
         # Fast Track Action
@@ -466,10 +449,10 @@ else:
     elif menu == "📊 ดูภาพรวม (Dashboard)":
         st.title("📊 สรุปสถานะผู้เล่นทุกคน")
         
-        for i, pl in enumerate(st.session_state.players):
+        for i, pl in enumerate(game_state['players']):
             st.markdown(f"### 👤 {pl.name} ({pl.job})")
             
-            # [UPDATED] Show 4-Box Summary like Action Screen
+            # [UPDATED DASHBOARD] Show 4-Box Summary like Action Screen
             st.markdown(f"""
             <div class="dashboard-container">
                 <div class="dash-box box-passive"><div class="dash-label">รายได้ทรัพย์สิน</div><div class="dash-value txt-passive">{pl.passive_income:,.0f}</div></div>
